@@ -71,19 +71,23 @@ const screenFragShader = `
     vec2 p = gl_FragCoord.xy;
   
     if (target.r >= 0.99 && target.g >= 0.99) {
-      gl_FragColor = vec4(0.8, 0.8, 0.8, 0.9);
+      // Frame
+      gl_FragColor = vec4(0.9, 0.9, 0.9, 0.9);
     } else if (target.r >= 0.99) {
+      // Mode 1
       gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
     } else if (target.g >= 0.99) {
+      // Mode 2
       gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
       gl_FragColor = sepia(gl_FragColor.rgb);
     } else {
-       vec4 c = blur(vUv, tImage, blurSize);
+      // Background
+      vec4 c = blur(vUv, tImage, blurSize);
   
-       // Grey-scale
-       float blah = (c.r + c.g + c.b)/3.0;
-       c.rgb = vec3(blah, blah, blah);
-       gl_FragColor = c;
+      // Grey-scale
+      float blah = (c.r + c.g + c.b)/3.0;
+      c.rgb = vec3(blah, blah, blah);
+      gl_FragColor = c;
     }
     
     // if (target.r <= 1.0 && target.r > 0.5) {
