@@ -14,7 +14,7 @@ const maskFragShader = `
     vec2 p = gl_FragCoord.xy;
   
     if (isFrame >= 1.0) {
-      gl_FragColor=vec4(0.5, 0.5, 0.5, 1);
+      gl_FragColor=vec4(1.0, 1.0, 1.0, 1);
     } else if (isFrame >= 0.9) {
       gl_FragColor=vec4(1.0, 0.0, 0.0, 1);
     } else  if (isFrame >= 0.8) {
@@ -70,41 +70,47 @@ const screenFragShader = `
     vec4 target = texture2D(tDiffuse, vUv);
     vec2 p = gl_FragCoord.xy;
   
-    
-    if (target.r <= 1.0 && target.r > 0.5) {
-      // gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
+    if (target.r >= 0.99 && target.g >= 0.99) {
+      gl_FragColor = vec4(0.8, 0.8, 0.8, 0.9);
+    } else if (target.r >= 0.99) {
+      gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
+    } else if (target.g >= 0.99) {
       gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
       gl_FragColor = sepia(gl_FragColor.rgb);
-    } else if (target.g <= 1.0 && target.g > 0.5) {
-      gl_FragColor = texture2D( tImage, vUv + vec2(0.05, 0.05));
-    } else if (target[0] <= 0.5 && target[0] > 0.0)  {
-      vec4 frameC = vec4(0.0, 0.0, 0.0, 1.0) + 0.8 * vec4(0.9, 0.9, 0.9, 0.0) + 0.2 * texture2D( tImage, vUv);
-  
-      // Attemp to distort right edges to give it a shadwy feel
-      vec2 test = vec2(0.002,  0);
-      vec4 testc = texture2D(tDiffuse, vUv + test);
-      if (testc.r == 0.0 && testc.g == 0.0) {
-        frameC /= 1.5;
-      }
-  
-      gl_FragColor = frameC;
     } else {
-      // Blur
-      vec4 c = blur(vUv, tImage, blurSize);
+       vec4 c = blur(vUv, tImage, blurSize);
   
-      // Grey-scale
-      float blah = (c.r + c.g + c.b)/3.0;
-      c.rgb = vec3(blah, blah, blah);
-      gl_FragColor = c;
+       // Grey-scale
+       float blah = (c.r + c.g + c.b)/3.0;
+       c.rgb = vec3(blah, blah, blah);
+       gl_FragColor = c;
     }
+    
+    // if (target.r <= 1.0 && target.r > 0.5) {
+    //   // gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
+    //   gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
+    //   gl_FragColor = sepia(gl_FragColor.rgb);
+    // } else if (target.g <= 1.0 && target.g > 0.5) {
+    //   gl_FragColor = texture2D( tImage, vUv + vec2(0.05, 0.05));
+    // } else if (target[0] <= 0.5 && target[0] > 0.0)  {
+    //   // vec4 frameC = vec4(0.0, 0.0, 0.0, 1.0) + 0.8 * vec4(0.9, 0.9, 0.9, 0.0) + 0.2 * texture2D( tImage, vUv);
   
-    // float lll = p.x / 80.0 - float(int(p.x)/int(80));
-    // if (lll < 0.3) {
-    //   gl_FragColor *= 0.9;
-    // }
-    // float jjj = p.y / 80.0 - float(int(p.y)/int(80));
-    // if (jjj < 0.3) {
-    //   gl_FragColor *= 0.9;
+    //   // // Attemp to distort right edges to give it a shadwy feel
+    //   // vec2 test = vec2(0.002,  0);
+    //   // vec4 testc = texture2D(tDiffuse, vUv + test);
+    //   // if (testc.r == 0.0 && testc.g == 0.0) {
+    //   //   frameC /= 1.5;
+    //   // }
+    //   // gl_FragColor = frameC;
+    //   gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    // } else {
+    //   // Blur
+    //   vec4 c = blur(vUv, tImage, blurSize);
+  
+    //   // Grey-scale
+    //   float blah = (c.r + c.g + c.b)/3.0;
+    //   c.rgb = vec3(blah, blah, blah);
+    //   gl_FragColor = c;
     // }
   }
 `;

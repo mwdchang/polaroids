@@ -132,7 +132,50 @@ function createSQ(px, py, rz, len, isFrame) {
   return mesh;
 }
 
+function dist(x1, y1, x2, y2) {
+  return Math.sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)); 
+}
 function seed(scene) {
+  const spread = [];
+  for (let i=0; i < 15; i++) {
+    let px, py, rz, len;
+
+    //rz = Math.random() * (2 * Math.PI) - Math.PI;
+    rz = Math.random() * (0.75*Math.PI) - 0.75/2.0*Math.PI;
+
+    len = Math.random() * 45 + 100;
+    px = Math.random() * width - 0.5 * width;
+    py = Math.random() * height - 0.5 * height;
+  
+  
+    while(true) {
+      px = Math.random() * width - 0.5 * width;
+      py = Math.random() * height - 0.5 * height;
+  
+      var tooClose = false;
+      for (var j=0; j < spread.length; j++) {
+        if (dist(spread[j].x, spread[j].y, px, py) < 30.0) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (tooClose === false) break;
+    }
+  
+    spread.push({
+      x: px,
+      y: py
+    });
+    
+  
+    // FIXME: render order problem
+    scene.add(createSQ(px, py, rz, len, 1.0));
+    if (Math.random() > 0.5) {
+      scene.add(createSQ(px, py, rz, len, 0.9));
+    } else {
+      scene.add(createSQ(px, py, rz, len, 0.8));
+    }
+  }
 }
 
 function renderMaskingBuffer() {
