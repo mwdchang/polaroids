@@ -23,17 +23,17 @@ const maskFragShader = `
   }
 `;
 
-const screenFragShader = `
+const polaroidFragShader = `
   varying vec2 vUv;
   
   uniform int blurSize;
   uniform float width;
   uniform float height;
   uniform sampler2D tImage;
-  uniform sampler2D tDiffuse;
+  uniform sampler2D tMask;
   
   vec4 sepia(vec3 c) {
-    float threshold = 0.95;
+    float threshold = 0.85;
     vec3 sepia;
     sepia.r = dot(c, vec3(0.393, 0.769, 0.189));
     sepia.g = dot(c, vec3(0.349, 0.686, 0.168));
@@ -67,12 +67,12 @@ const screenFragShader = `
   
   void main() {
   
-    vec4 target = texture2D(tDiffuse, vUv);
+    vec4 target = texture2D(tMask, vUv);
     vec2 p = gl_FragCoord.xy;
   
     if (target.r >= 0.99 && target.g >= 0.99) {
       // Frame
-      gl_FragColor = vec4(0.9, 0.9, 0.9, 0.9);
+      gl_FragColor = vec4(0.95, 0.95, 0.95, 1.0);
     } else if (target.r >= 0.99) {
       // Mode 1
       gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
@@ -89,32 +89,5 @@ const screenFragShader = `
       c.rgb = vec3(blah, blah, blah);
       gl_FragColor = c;
     }
-    
-    // if (target.r <= 1.0 && target.r > 0.5) {
-    //   // gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
-    //   gl_FragColor = texture2D( tImage, vUv + vec2(-0.07, 0.01));
-    //   gl_FragColor = sepia(gl_FragColor.rgb);
-    // } else if (target.g <= 1.0 && target.g > 0.5) {
-    //   gl_FragColor = texture2D( tImage, vUv + vec2(0.05, 0.05));
-    // } else if (target[0] <= 0.5 && target[0] > 0.0)  {
-    //   // vec4 frameC = vec4(0.0, 0.0, 0.0, 1.0) + 0.8 * vec4(0.9, 0.9, 0.9, 0.0) + 0.2 * texture2D( tImage, vUv);
-  
-    //   // // Attemp to distort right edges to give it a shadwy feel
-    //   // vec2 test = vec2(0.002,  0);
-    //   // vec4 testc = texture2D(tDiffuse, vUv + test);
-    //   // if (testc.r == 0.0 && testc.g == 0.0) {
-    //   //   frameC /= 1.5;
-    //   // }
-    //   // gl_FragColor = frameC;
-    //   gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    // } else {
-    //   // Blur
-    //   vec4 c = blur(vUv, tImage, blurSize);
-  
-    //   // Grey-scale
-    //   float blah = (c.r + c.g + c.b)/3.0;
-    //   c.rgb = vec3(blah, blah, blah);
-    //   gl_FragColor = c;
-    // }
   }
 `;
