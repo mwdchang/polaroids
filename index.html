@@ -4,7 +4,51 @@
 <title>Polaroids</title>
 <style>
 html, body {
-  margin: 0;
+  font-family: Tahoma;
+  font-size: 90%;
+}
+body {
+  margin: 10px;
+}
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.button {
+  border-radius: 3px;
+  border: 1px solid #888;
+  padding: 4px;
+}
+.button:hover {
+  background: #CCC;
+  cursor: pointer;
+}
+.custom-file-input {
+  color: transparent;
+}
+.custom-file-input::-webkit-file-upload-button {
+  visibility: hidden;
+}
+.custom-file-input::before {
+  content: 'Select image file';
+  color: black;
+  display: inline-block;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 3px;
+  padding: 5px; 
+  outline: none;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  cursor: pointer;
+  font-size: 10pt;
+}
+.custom-file-input:hover::before {
+  border-color: black;
+}
+.custom-file-input:active {
+  outline: 0;
 }
 </style>
 <script src="thre.min.js.110"></script>
@@ -12,8 +56,32 @@ html, body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js" integrity="sha256-gSh8eotzb/CVvCREGPUNgIWuDnTYnZvVOQnRrP1eDjI=" crossorigin="anonymous"></script>
 -->
 <script src="shaders.js"></script>
+<script src="paste.js"></script>
 </head>
 <body>
+<p>
+My attempt to create a polaroid collage effect. This is created by a two-pass rendering. The first pass
+renderings a masking-layer that describes the effects at the fragment level. The second pass then
+uses the masking-layer to find the correct texture and shader function combination.
+
+<br>
+You can paste an image from the clipboard, or <input type="file" id="file-upload" class="custom-file-input" change="handleChange"/> 
+
+</p>
+<div class="row">
+  <span style="width:100px">Age amount:</span> 
+  &nbsp;
+  <input type="range" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
+</div>
+<div class="row">
+  <span style="width:100px"># Polaroids:</span> 
+  &nbsp;
+  <input type="range" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
+  &nbsp;
+  <div class="button">Shuffle</div>
+</div>
+<br>
+<div id="canvas"></div>
 </body>
 <script>
 const FILENAME = 'me2.jpg';
@@ -21,13 +89,52 @@ const FILENAME = 'me2.jpg';
 let width = 1;
 let height = 1;
 let camera;
+let shaderMaterial;
 
 const renderer = new THREE.WebGLRenderer({antialias: true});
-const texture = new THREE.TextureLoader().load( FILENAME, run );
 const scene = new THREE.Scene();
+let texture; 
+texture = new THREE.TextureLoader().load( FILENAME, run );
+
+document.onpaste = onPasteProxy(test);
+
+function test(data) {
+  // console.log('!!', data);
+
+  const image = new Image();
+  image.src = data;
+  texture = new THREE.TextureLoader().load( data, run );
+  
+  /*
+  image.onload = () => {
+    texture = new THREE.TextureLoader().load( image.src, run );
+  };
+  */
+}
+
+const elmFileUpload = document.getElementById('file-upload');
+elmFileUpload.addEventListener('change', handleFileChange, false);
+
+
+function handleFileChange(evt) {
+  console.log('testing');
+  const file = evt.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = e.target.result;
+    test(data);
+  };
+  reader.readAsDataURL(file);
+}
 
 
 function run(texture) {
+  // Clean
+  while(scene.children.length > 0){ 
+    scene.remove(scene.children[0]); 
+  }
+
+  // Start
   console.log('run', texture);
   console.log(`\twidth ${texture.image.width}`);
   console.log(`\theight ${texture.image.height}`);
@@ -39,13 +146,13 @@ function run(texture) {
   camera.position.z = 100;
 
   renderer.setSize(texture.image.width, texture.image.height);
-  const body = document.body;
-  body.appendChild(renderer.domElement);
+  const canvasContainer = document.getElementById('canvas');
+  canvasContainer.appendChild(renderer.domElement);
 
   const maskBuffer = renderMaskingBuffer();
   combineBuffers(maskBuffer, texture); 
 
-  // animate();
+  animate();
 }
 
 
@@ -162,37 +269,47 @@ function renderMaskingBuffer() {
 
 
 function combineBuffers(maskBuffer, texture) {
-  const materialT = new THREE.ShaderMaterial( {
+  shaderMaterial = new THREE.ShaderMaterial( {
     uniforms: { 
       tImage: { type: 't',  value: texture },
       tMask: { type: 't', value: maskBuffer },
       width: { type: 'f', value: width },
       height: { type: 'f', value: height },
-      blurSize: { type: 'i', value: 4 }
+      blurSize: { type: 'i', value: 4 },
+      threshold: { type: 'f', value: 0.0 }
     },
     vertexShader: vertexShader,
     fragmentShader: polaroidFragShader,
     depthWrite: false
   });
 
-  var plane = new THREE.PlaneGeometry(width, height);
-  var quad = new THREE.Mesh( plane, materialT );
+  const plane = new THREE.PlaneGeometry(width, height);
+  const quad = new THREE.Mesh( plane, shaderMaterial);
   quad.position.x = width / 2;
   quad.position.y = height / 2;
 
   scene.add(camera)
   scene.add( quad );
-  renderer.render(scene, camera);
+  // renderer.render(scene, camera);
 }
 
-function render() {
+function renderFrame() {
+  // shaderMaterial.uniforms.delta.value = 0.5 + Math.sin(delta) * 0.0005;
+  // shaderMaterial.uniforms.threshold.value += 0.002;
+  
   renderer.render(scene, camera);
 }
 
 
 function animate() {
-	requestAnimationFrame( animate );
-  render();
+	// requestAnimationFrame( animate );
+  renderFrame();
+}
+
+function effectChanged() {
+  const v = +document.getElementsByTagName('input')[0].value;
+  shaderMaterial.uniforms.threshold.value = v;
+  renderFrame();
 }
 
 </script>
