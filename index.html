@@ -51,12 +51,13 @@ body {
   outline: 0;
 }
 </style>
-<script src="thre.min.js.110"></script>
 <!--
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js" integrity="sha256-gSh8eotzb/CVvCREGPUNgIWuDnTYnZvVOQnRrP1eDjI=" crossorigin="anonymous"></script>
+<script src="thre.min.js.110"></script>
 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js" integrity="sha256-gSh8eotzb/CVvCREGPUNgIWuDnTYnZvVOQnRrP1eDjI=" crossorigin="anonymous"></script>
 <script src="shaders.js"></script>
 <script src="paste.js"></script>
+<script src="polaroid.js"></script>
 </head>
 <body>
 <p>
@@ -71,7 +72,7 @@ You can paste an image from the clipboard, or <input type="file" id="file-upload
 <div class="row">
   <span style="width:100px">Age amount:</span> 
   &nbsp;
-  <input type="range" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
+  <input type="range" id="sepia-filter" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
 </div>
 <div class="row">
   <span style="width:100px"># Polaroids:</span> 
@@ -84,208 +85,25 @@ You can paste an image from the clipboard, or <input type="file" id="file-upload
 <div id="canvas"></div>
 </body>
 <script>
-const FILENAME = 'me2.jpg';
+const FILENAME = 'images/me2.jpg';
+const polaroid = new Polaroid(document.getElementById('canvas'));
 
-let width = 1;
-let height = 1;
-let camera;
-let shaderMaterial;
+// Default
+let texture = new THREE.TextureLoader().load( FILENAME, (t) => polaroid.run(t) );
 
-const renderer = new THREE.WebGLRenderer({antialias: true});
-const scene = new THREE.Scene();
-let texture; 
-texture = new THREE.TextureLoader().load( FILENAME, run );
+// Listeners
+document.onpaste = onPasteProxy(changeTexture);
+document.getElementById('file-upload').addEventListener('change', onFileProxy(changeTexture), false);
 
-document.onpaste = onPasteProxy(test);
-
-const elmFileUpload = document.getElementById('file-upload');
-elmFileUpload.addEventListener('change', onFileProxy(test), false);
-
-function test(data) {
+function changeTexture(data) {
   const image = new Image();
   image.src = data;
-  texture = new THREE.TextureLoader().load( data, run );
-}
-
-
-function run(texture) {
-  // Clean
-  while(scene.children.length > 0){ 
-    scene.remove(scene.children[0]); 
-  }
-
-  // Start
-  console.log('run', texture);
-  console.log(`\twidth ${texture.image.width}`);
-  console.log(`\theight ${texture.image.height}`);
-
-  width = texture.image.width;
-  height = texture.image.height;
-
-  camera = new THREE.OrthographicCamera(0 , width, height, 0, 1, 1000);
-  camera.position.z = 100;
-
-  renderer.setSize(texture.image.width, texture.image.height);
-  const canvasContainer = document.getElementById('canvas');
-  canvasContainer.appendChild(renderer.domElement);
-
-  const maskBuffer = renderMaskingBuffer();
-  combineBuffers(maskBuffer, texture); 
-
-  animate();
-}
-
-
-function createPolaroid(px, py, rz, len, isFrame) {
-  let mesh, geometry, material;
-  let x1 = 0; 
-  let y1 = 0;
-  let x2 = len;
-  let y2 = len + 10;
-
-  if (isFrame < 1.0) {
-    x1 += 4; 
-    y1 += 20; 
-    x2 -= 4; 
-    y2 -= 6; 
-  }
-
-  let cx = 0.5 * width;
-  let cy = 0.5 * height;
-
-  let F1 = { x: x1, y: y1 };
-  let F2 = { x: x2, y: y2 };
-
-  geometry = new THREE.Geometry();
-  geometry.vertices.push( new THREE.Vector3( F1.x, F1.y, 2 ) );
-  geometry.vertices.push( new THREE.Vector3( F2.x, F1.y, 2 ) );
-  geometry.vertices.push( new THREE.Vector3( F2.x, F2.y, 2 ) );
-  geometry.vertices.push( new THREE.Vector3( F1.x, F2.y, 2 ) );
-  geometry.faces.push( new THREE.Face3( 0, 1, 2 ) ); // counter-clockwise winding order
-  geometry.faces.push( new THREE.Face3( 0, 2, 3 ) );
-  geometry.computeFaceNormals();
-
-  let uniforms = {};
-  uniforms.isFrame = {
-    type: 'f', value: isFrame
-  };
-
-  material = new THREE.ShaderMaterial( {
-    uniforms: uniforms,
-    vertexShader: vertexShader,
-    fragmentShader: maskFragShader,
-    depthTest: false
-  });
-
-  mesh = new THREE.Mesh( geometry, material);
-  mesh.position.x = cx + px;
-  mesh.position.y = cy + py;
-  mesh.rotation.z = rz;
-  return mesh;
-}
-
-function dist(x1, y1, x2, y2) {
-  return Math.sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)); 
-}
-function seed(scene) {
-  const spread = [];
-  for (let i=0; i < 25; i++) {
-    let px, py, rz, len;
-
-    //rz = Math.random() * (2 * Math.PI) - Math.PI;
-    rz = Math.random() * (0.75*Math.PI) - 0.75/2.0*Math.PI;
-
-    len = Math.random() * 45 + 100;
-    px = Math.random() * width - 0.5 * width;
-    py = Math.random() * height - 0.5 * height;
-  
-  
-    while(true) {
-      px = Math.random() * width - 0.5 * width;
-      py = Math.random() * height - 0.5 * height;
-  
-      var tooClose = false;
-      for (var j=0; j < spread.length; j++) {
-        if (dist(spread[j].x, spread[j].y, px, py) < 30.0) {
-          tooClose = true;
-          break;
-        }
-      }
-      if (tooClose === false) break;
-    }
-  
-    spread.push({
-      x: px,
-      y: py
-    });
-    
-  
-    // FIXME: render order problem
-    scene.add(createPolaroid(px, py, rz, len, 1.0));
-    if (Math.random() > 0.5) {
-      scene.add(createPolaroid(px, py, rz, len, 0.9));
-    } else {
-      scene.add(createPolaroid(px, py, rz, len, 0.8));
-    }
-  }
-}
-
-function renderMaskingBuffer() {
-  const scene = new THREE.Scene();
-  scene.add(camera);
-  seed(scene);
-
-  // FIXME If just do width, height it becomes jagged ????? Filter issues?
-  const textureBuffer = new THREE.WebGLRenderTarget(width, height, { 
-    minFilter: THREE.NearestMipMapNearestFilter, 
-    magFilter: THREE.LinearMipMapLinearFilter,
-  }); 
-
-  renderer.setRenderTarget(textureBuffer);
-  renderer.render(scene, camera);
-  renderer.setRenderTarget(null);
-  return textureBuffer;
-}
-
-
-function combineBuffers(maskBuffer, texture) {
-  shaderMaterial = new THREE.ShaderMaterial( {
-    uniforms: { 
-      tImage: { type: 't',  value: texture },
-      tMask: { type: 't', value: maskBuffer },
-      width: { type: 'f', value: width },
-      height: { type: 'f', value: height },
-      blurSize: { type: 'i', value: 4 },
-      threshold: { type: 'f', value: 0.0 }
-    },
-    vertexShader: vertexShader,
-    fragmentShader: polaroidFragShader,
-    depthWrite: false
-  });
-
-  const plane = new THREE.PlaneGeometry(width, height);
-  const quad = new THREE.Mesh( plane, shaderMaterial);
-  quad.position.x = width / 2;
-  quad.position.y = height / 2;
-
-  scene.add(camera)
-  scene.add( quad );
-}
-
-function renderFrame() {
-  renderer.render(scene, camera);
-}
-
-
-function animate() {
-	// requestAnimationFrame( animate );
-  renderFrame();
+  texture = new THREE.TextureLoader().load( data, (t) => polaroid.run(t) );
 }
 
 function effectChanged() {
-  const v = +document.getElementsByTagName('input')[0].value;
-  shaderMaterial.uniforms.threshold.value = v;
-  renderFrame();
+  const v = +document.getElementById('sepia-filter').value;
+  polaroid.changeShaderUniform('threshold', v);
 }
 
 </script>
