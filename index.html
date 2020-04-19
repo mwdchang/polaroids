@@ -51,9 +51,6 @@ body {
   outline: 0;
 }
 </style>
-<!--
-<script src="thre.min.js.110"></script>
--->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js" integrity="sha256-gSh8eotzb/CVvCREGPUNgIWuDnTYnZvVOQnRrP1eDjI=" crossorigin="anonymous"></script>
 <script src="shaders.js"></script>
 <script src="paste.js"></script>
@@ -77,15 +74,15 @@ You can paste an image from the clipboard, or <input type="file" id="file-upload
 <div class="row">
   <span style="width:100px"># Polaroids:</span> 
   &nbsp;
-  <input type="range" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
+  <input type="range" id="num-polaroid" value="25" min="10" max="50" step="1" style="width: 200px" onInput="numChanged()">
   &nbsp;
-  <div class="button">Shuffle</div>
+  <div class="button" onClick="shuffle()">Shuffle</div>
 </div>
 <br>
 <div id="canvas"></div>
 </body>
 <script>
-const FILENAME = 'images/me2.jpg';
+const FILENAME = 'images/sample.png';
 const polaroid = new Polaroid(document.getElementById('canvas'));
 
 // Default
@@ -104,6 +101,16 @@ function changeTexture(data) {
 function effectChanged() {
   const v = +document.getElementById('sepia-filter').value;
   polaroid.changeShaderUniform('threshold', v);
+}
+
+function numChanged() {
+  const v = +document.getElementById('num-polaroid').value;
+  polaroid.numPolaroids = v;
+  polaroid.run(texture);
+}
+
+function shuffle() {
+  polaroid.run(texture);
 }
 
 </script>

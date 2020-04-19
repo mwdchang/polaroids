@@ -11,6 +11,7 @@ class Polaroid {
     this.renderer = new THREE.WebGLRenderer({antialias: true});
     this.scene = new THREE.Scene();
     this.shaderMaterial = {};
+    this.numPolaroids = 25;
   }
 
   changeShaderUniform(key, v) {
@@ -29,10 +30,6 @@ class Polaroid {
     }
   
     // Start
-    // console.log('run', texture);
-    // console.log(`\twidth ${texture.image.width}`);
-    // console.log(`\theight ${texture.image.height}`);
-  
     this.width = texture.image.width;
     this.height = texture.image.height;
   
@@ -145,24 +142,19 @@ class Polaroid {
     const width = this.width;
     const height = this.height;
 
-    for (let i=0; i < 25; i++) {
-      let px, py, rz, len;
+    for (let i=0; i < this.numPolaroids; i++) {
+      let px, py;
   
-      //rz = Math.random() * (2 * Math.PI) - Math.PI;
-      rz = Math.random() * (0.75*Math.PI) - 0.75/2.0*Math.PI;
-  
-      len = Math.random() * 45 + 100;
-      px = Math.random() * width - 0.5 * width;
-      py = Math.random() * height - 0.5 * height;
-    
-    
+      const rz = Math.random() * (0.75*Math.PI) - 0.75/2.0*Math.PI;
+      const len = Math.random() * 75 + 0.15*this.width;
+
       while(true) {
         px = Math.random() * width - 0.5 * width;
         py = Math.random() * height - 0.5 * height;
     
         var tooClose = false;
         for (var j=0; j < spread.length; j++) {
-          if (dist(spread[j].x, spread[j].y, px, py) < 30.0) {
+          if (dist(spread[j].x, spread[j].y, px, py) < 50.0) {
             tooClose = true;
             break;
           }
@@ -185,6 +177,4 @@ class Polaroid {
     }
     return maskScene;
   }
-
-
 }
