@@ -98,33 +98,13 @@ texture = new THREE.TextureLoader().load( FILENAME, run );
 
 document.onpaste = onPasteProxy(test);
 
-function test(data) {
-  // console.log('!!', data);
+const elmFileUpload = document.getElementById('file-upload');
+elmFileUpload.addEventListener('change', onFileProxy(test), false);
 
+function test(data) {
   const image = new Image();
   image.src = data;
   texture = new THREE.TextureLoader().load( data, run );
-  
-  /*
-  image.onload = () => {
-    texture = new THREE.TextureLoader().load( image.src, run );
-  };
-  */
-}
-
-const elmFileUpload = document.getElementById('file-upload');
-elmFileUpload.addEventListener('change', handleFileChange, false);
-
-
-function handleFileChange(evt) {
-  console.log('testing');
-  const file = evt.target.files[0];
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = e.target.result;
-    test(data);
-  };
-  reader.readAsDataURL(file);
 }
 
 
@@ -290,13 +270,9 @@ function combineBuffers(maskBuffer, texture) {
 
   scene.add(camera)
   scene.add( quad );
-  // renderer.render(scene, camera);
 }
 
 function renderFrame() {
-  // shaderMaterial.uniforms.delta.value = 0.5 + Math.sin(delta) * 0.0005;
-  // shaderMaterial.uniforms.threshold.value += 0.002;
-  
   renderer.render(scene, camera);
 }
 

@@ -31,9 +31,11 @@ const polaroidFragShader = `
   uniform float height;
   uniform sampler2D tImage;
   uniform sampler2D tMask;
+
+  uniform float threshold; 
   
   vec4 sepia(vec3 c) {
-    float threshold = 0.85;
+    // float threshold = 0.85;
     vec3 sepia;
     sepia.r = dot(c, vec3(0.393, 0.769, 0.189));
     sepia.g = dot(c, vec3(0.349, 0.686, 0.168));

@@ -6,7 +6,16 @@ const onPasteProxy = (callbackFn) => {
     if (!items || items.length <= 0) return;
     loadImage(items[0].getAsFile(), callbackFn);
   };
-}
+};
+
+
+// File input helper
+const onFileProxy = (callbackfn) => {
+  return (evt) => {
+    const file = evt.target.files[0];
+    loadImage(file, callbackfn);
+  };
+};
 
 
 function loadImage(file, callbackFn) {
