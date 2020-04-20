@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Polaroids</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <style>
 html, body {
   font-family: Tahoma;
@@ -37,7 +38,7 @@ body {
   background: #fff;
   border: 1px solid #999;
   border-radius: 3px;
-  padding: 5px; 
+  padding: 2px 5px; 
   outline: none;
   white-space: nowrap;
   -webkit-user-select: none;
@@ -57,22 +58,27 @@ body {
 <script src="polaroid.js"></script>
 </head>
 <body>
-<p>
-My attempt to create a polaroid collage effect. This is created by a two-pass rendering. The first pass
-renderings a masking-layer that describes the effects at the fragment level. The second pass then
-uses the masking-layer to find the correct texture and shader function combination.
-
-<br>
-You can paste an image from the clipboard, or <input type="file" id="file-upload" class="custom-file-input" change="handleChange"/> 
-
-</p>
 <div class="row">
-  <span style="width:100px">Age amount:</span> 
-  &nbsp;
-  <input type="range" id="sepia-filter" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
+  <div style="font-size: 150%; padding-right: 10px">Polaroids Collage</div>
+  <a style="text-decoration: none" href="https://github.com/mwdchang/polaroids" class="button"><i class="fa fa-fw fa-github">&nbsp;</i>Fork me</a>
 </div>
 <div class="row">
-  <span style="width:100px"># Polaroids:</span> 
+<p>
+Creating a polaroid collage effect. Use the two sliders below to adjust the Sepia threshold and the number of polaroids in the collage,
+respectively.
+
+<br>
+You can copy-n-paste an image from the clipboard, or <input type="file" id="file-upload" class="custom-file-input" change="handleChange"/> 
+</p>
+</div>
+<div class="row">
+  <span>Sepia:</span> 
+  &nbsp;
+  <input type="range" id="sepia-filter" value="0" min="0" max="1.5" step="0.01" style="width: 200px" onInput="effectChanged()">
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <span># Polaroids:</span> 
   &nbsp;
   <input type="range" id="num-polaroid" value="25" min="10" max="50" step="1" style="width: 200px" onInput="numChanged()">
   &nbsp;
